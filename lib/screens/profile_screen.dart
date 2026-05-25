@@ -192,14 +192,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with SingleTicker
 
           // Tab Bar Selector
           Container(
-            color: Colors.white,
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: borderColor, width: 1.5),
-                bottom: BorderSide(color: borderColor, width: 1.5),
-              ),
+            color: Colors.white, // <-- Moved inside
+            border: Border(
+            top: BorderSide(color: borderColor, width: 1.5),
+            bottom: BorderSide(color: borderColor, width: 1.5),
             ),
-            child: TabBar(
+          ),
+              child: TabBar(
               controller: _tabController,
               labelColor: borderColor,
               unselectedLabelColor: borderColor.withOpacity(0.4),
