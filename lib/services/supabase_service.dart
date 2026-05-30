@@ -20,6 +20,8 @@ class SupabaseService {
     return await _client.auth.signInWithPassword(email: email, password: password);
   }
 
+  
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -184,14 +186,14 @@ class SupabaseService {
   }
 
   // --- Claims Section ---
-  Future<List<Claim>> fetchClaimsForPost(String postId) async {
-    try {
-      final response = await _client.from('claims').select().eq('post_id', postId);
-      final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => Claim.fromJson(json as Map<String, dynamic>)).toList();
-    } catch (e) {
-      return [];
-    }
+  Future<List<Map<String, dynamic>>> fetchClaimsForPost(String postId) async {
+  final response = await _client
+      .from('claims')
+      .select('*, profiles:claimant_id(username)')
+      .eq('post_id', postId)
+      .order('created_at', ascending: false);
+  
+  return List<Map<String, dynamic>>.from(response);
   }
 
   Future<List<Claim>> fetchClaimsByUser(String claimantId) async {

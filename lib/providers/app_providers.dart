@@ -119,6 +119,33 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, post
   ref.onDispose(() {
     service.client.removeChannel(channel);
   });
-
+  
   return service.fetchComments(postId);
+});
+
+// Real-time Claims for a Specific Post
+final postClaimsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, postId) async {
+  final service = ref.watch(supabaseServiceProvider);
+
+  // Set up real-time listener on the claims table for this post
+  final channel = service.client.channel('public:claims_$postId');
+  channel.onPostgresChanges(
+    event: PostgresChangeEvent.all,
+    schema: 'public',
+    table: 'claims',
+    filter: PostgresChangeFilter(
+      type: PostgresChangeFilterType.eq,
+      column: 'post_id',
+      value: postId,
+    ),
+    callback: (payload) {
+      ref.invalidateSelf();
+    },
+  ).subscribe();
+
+  ref.onDispose(() {
+    service.client.removeChannel(channel);
+  });
+
+  return service.fetchClaimsForPost(postId);
 });

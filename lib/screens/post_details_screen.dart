@@ -56,6 +56,39 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
     }
   }
 
+  Future<void> _handleClaimStatus(String claimId, String status, String postId) async {
+    setState(() {
+      _isPerformingAction = true;
+    });
+
+    try {
+      final service = ref.read(supabaseServiceProvider);
+      
+      // 1. Update the claim status (accepted / rejected)
+      await service.updateClaimStatus(claimId, status);
+      
+      // 2. If accepted, automatically mark the post as resolved
+      if (status == 'accepted') {
+        await service.updatePostStatus(postId, 'resolved');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Claim successfully $status!'),
+          backgroundColor: status == 'accepted' ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Action failed: $e'), backgroundColor: const Color(0xFFFF6B6B)),
+      );
+    } finally {
+      setState(() {
+        _isPerformingAction = false;
+      });
+    }
+  }
+
   Future<void> _claimItem(String postId) async {
     setState(() {
       _isPerformingAction = true;
@@ -87,8 +120,8 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
 
     try {
       await ref.read(supabaseServiceProvider).updatePostStatus(postId, 'resolved');
-      ref.invalidate(postsProvider);
-      ref.invalidate(postDetailsProvider(postId));
+      // ref.invalidate(postsProvider);
+      // ref.invalidate(postDetailsProvider(postId));
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -416,6 +449,124 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                           ),
                         ),
                       ],
+
+                      // ==========================================
+                      // 🌟 CLAIMS MANAGEMENT DASHBOARD (OWNER ONLY) 🌟
+                      // ==========================================
+                      if (isOwner) ...[
+                        ref.watch(postClaimsProvider(post.id)).when(
+                              data: (claims) {
+                                if (claims.isEmpty) return const SizedBox.shrink();
+                                
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: borderColor, width: 2),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.assignment_turned_in_rounded, color: borderColor),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'INCOMING RECOVERY CLAIMS',
+                                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: claims.length,
+                                        itemBuilder: (context, index) {
+                                          final claim = claims[index];
+                                          final claimId = claim['id'] as String;
+                                          final currentStatus = claim['status'] as String;
+                                          final profile = claim['profiles'] as Map<String, dynamic>?;
+                                          final claimantName = profile?['username'] ?? 'Anonymous User';
+
+                                          return Container(
+                                            margin: const EdgeInsets.symmetric(vertical: 6),
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFAFAFA),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: borderColor, width: 1.5),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        claimantName,
+                                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        'Status: ${currentStatus.toUpperCase()}',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: currentStatus == 'accepted'
+                                                              ? const Color(0xFF0F5A54)
+                                                              : currentStatus == 'rejected'
+                                                                  ? const Color(0xFF7A0E0E)
+                                                                  : borderColor.withOpacity(0.6),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                if (currentStatus == 'pending' && !_isPerformingAction) ...[
+                                                  // Reject Button
+                                                  IconButton(
+                                                    icon: const Icon(Icons.cancel_outlined, color: Color(0xFFFF6B6B)),
+                                                    onPressed: () => _handleClaimStatus(claimId, 'rejected', post.id),
+                                                  ),
+                                                  // Accept Button
+                                                  InkWell(
+                                                    onTap: () => _handleClaimStatus(claimId, 'accepted', post.id),
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFF4ECDC4),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        border: Border.all(color: borderColor, width: 1.5),
+                                                      ),
+                                                      child: const Text(
+                                                        'ACCEPT',
+                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F5A54)),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ] else if (currentStatus != 'pending') ...[
+                                                  Icon(
+                                                    currentStatus == 'accepted' ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                                                    color: currentStatus == 'accepted' ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
+                                                  )
+                                                ],
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(color: borderColor))),
+                              error: (err, _) => const SizedBox.shrink(),
+                            ),
+                      ],
+                      // ==========================================
 
                       // Comments Header
                       const Padding(
