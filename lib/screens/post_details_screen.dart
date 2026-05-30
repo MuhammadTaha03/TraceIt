@@ -33,7 +33,7 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
       await ref.read(supabaseServiceProvider).addComment(postId, text);
       _commentController.clear();
       // Invalidate comments for this post
-      ref.invalidate(commentsProvider(postId));
+      // ref.invalidate(commentsProvider(postId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to post comment: $e'), backgroundColor: const Color(0xFFFF6B6B)),
@@ -48,7 +48,7 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
   Future<void> _deleteComment(String postId, String commentId) async {
     try {
       await ref.read(supabaseServiceProvider).deleteComment(commentId);
-      ref.invalidate(commentsProvider(postId));
+      // ref.invalidate(commentsProvider(postId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete comment: $e')),

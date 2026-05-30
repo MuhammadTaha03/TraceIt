@@ -119,7 +119,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       await service.createPost(post);
       
       // Invalidate the post provider so that the feed updates immediately
-      ref.invalidate(postsProvider);
+      // ref.invalidate(postsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

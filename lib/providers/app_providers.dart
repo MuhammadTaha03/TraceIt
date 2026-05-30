@@ -40,13 +40,30 @@ final postsFilterTypeProvider = StateProvider<String>((ref) => 'All'); // 'All',
 final postsSearchQueryProvider = StateProvider<String>((ref) => '');
 
 // Filtered Posts Provider
+// Filtered Posts Provider (REAL-TIME ENABLED)
 final postsProvider = FutureProvider<List<Post>>((ref) async {
   final service = ref.watch(supabaseServiceProvider);
   final category = ref.watch(postsFilterCategoryProvider);
   final type = ref.watch(postsFilterTypeProvider);
   final search = ref.watch(postsSearchQueryProvider);
   
-  // Re-run this future whenever filters change
+  // 1. Subscribe to live changes on the 'posts' table
+  final channel = service.client.channel('public:posts_feed');
+  channel.onPostgresChanges(
+    event: PostgresChangeEvent.all,
+    schema: 'public',
+    table: 'posts',
+    callback: (payload) {
+      // 2. When a change happens, tell Riverpod to auto-refresh the UI
+      ref.invalidateSelf(); 
+    }
+  ).subscribe();
+
+  // 3. Clean up the listener when leaving the screen
+  ref.onDispose(() {
+    service.client.removeChannel(channel);
+  });
+
   return service.fetchPosts(
     category: category,
     type: type,
@@ -54,13 +71,54 @@ final postsProvider = FutureProvider<List<Post>>((ref) async {
   );
 });
 
-// Post Details Provider (fetch single post by ID)
+// Post Details Provider (REAL-TIME ENABLED)
 final postDetailsProvider = FutureProvider.family<Post?, String>((ref, postId) async {
   final service = ref.watch(supabaseServiceProvider);
+  
+  final channel = service.client.channel('public:post_details_$postId');
+  channel.onPostgresChanges(
+    event: PostgresChangeEvent.all,
+    schema: 'public',
+    table: 'posts',
+    filter: PostgresChangeFilter(
+      type: PostgresChangeFilterType.eq,
+      column: 'id',
+      value: postId,
+    ),
+    callback: (payload) {
+      ref.invalidateSelf();
+    }
+  ).subscribe();
+
+  ref.onDispose(() {
+    service.client.removeChannel(channel);
+  });
+
   return service.fetchPostById(postId);
 });
 
-// Comments Provider for a post
+// Comments Provider (REAL-TIME ENABLED)
 final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, postId) async {
-  return ref.watch(supabaseServiceProvider).fetchComments(postId);
+  final service = ref.watch(supabaseServiceProvider);
+
+  final channel = service.client.channel('public:comments_$postId');
+  channel.onPostgresChanges(
+    event: PostgresChangeEvent.all,
+    schema: 'public',
+    table: 'comments',
+    filter: PostgresChangeFilter(
+      type: PostgresChangeFilterType.eq,
+      column: 'post_id',
+      value: postId,
+    ),
+    callback: (payload) {
+      ref.invalidateSelf();
+    }
+  ).subscribe();
+
+  ref.onDispose(() {
+    service.client.removeChannel(channel);
+  });
+
+  return service.fetchComments(postId);
 });
