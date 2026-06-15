@@ -62,8 +62,8 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/lost-and-found.git
-   cd lost-and-found
+   git clone https://github.com/MuhammadTaha03/TraceIt
+   cd TraceIt
    ```
 
 2. **Run the app**
@@ -85,15 +85,6 @@ The application features full implementation of Create, Read, Update, and Delete
 
 ---
 
-## 📸 Screenshots
-
-> *(Add screenshots here showcasing the clean, flat UI once development is complete)*
-
-| Home Feed | Post Details |
-|---|---|
-| ![Home Feed](screenshots/feed.png) | ![Post Details](screenshots/details.png) |
-
----
 
 ## 🙌 Team
 
