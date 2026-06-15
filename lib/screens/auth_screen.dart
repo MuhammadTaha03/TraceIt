@@ -47,7 +47,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Account created! Please check your email for confirmation if required.'),
-            backgroundColor: Color(0xFF4ECDC4),
+            backgroundColor: Color(0xFF1A73E8),
           ),
         );
         // Switch to login mode
@@ -76,11 +76,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const borderColor = Color(0xFF1E1E1E);
-    const accentColor = Color(0xFFFFD93D); // Flat Neo-brutalism yellow
+    const primaryColor = Color(0xFF1A73E8);
+    const onSurface = Color(0xFF191C1D);
+    const outlineColor = Color(0xFF727785);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -98,30 +99,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: accentColor,
-                          shape: BoxShape.rectangle,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: borderColor, width: 2.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: borderColor,
-                              offset: Offset(3, 3),
-                            ),
-                          ],
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
                           Icons.search_rounded,
                           size: 32,
-                          color: borderColor,
+                          color: primaryColor,
                         ),
                       ),
                       const SizedBox(width: 14),
                       const Text(
                         'TraceIt',
                         style: TextStyle(
+                          fontFamily: 'Inter',
                           fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: borderColor,
+                          fontWeight: FontWeight.w700,
+                          color: onSurface,
                           letterSpacing: -1,
                         ),
                       ),
@@ -132,24 +126,26 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     'Campus Lost & Found Hub',
                     textAlign: TextAlign.center,
                     style: TextStyle(
+                      fontFamily: 'Inter',
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: borderColor.withOpacity(0.5),
+                      fontWeight: FontWeight.w500,
+                      color: outlineColor,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 48),
 
                   // Box Container for Form Elements
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: borderColor, width: 2),
-                      boxShadow: const [
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: const Color(0xFFE1E3E4), width: 1),
+                      boxShadow: [
                         BoxShadow(
-                          color: borderColor,
-                          offset: Offset(4, 4),
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -159,117 +155,86 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         Text(
                           _isSignUp ? 'Create Account' : 'Welcome Back',
                           style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: borderColor,
+                            fontFamily: 'Inter',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: onSurface,
+                            letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
                         if (_errorMessage != null) ...[
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFE3E3),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFFF6B6B), width: 1.5),
+                              color: const Color(0xFFFFDAD6),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
                               _errorMessage!,
                               style: const TextStyle(
-                                color: Color(0xFFC92A2A),
-                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF93000A),
+                                fontWeight: FontWeight.w500,
                                 fontSize: 13,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
                         ],
 
                         // Username (Register Only)
                         if (_isSignUp) ...[
-                          const Text(
-                            'USERNAME',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              color: borderColor,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
+                          _buildLabel('USERNAME'),
+                          const SizedBox(height: 8),
                           TextFormField(
                             controller: _usernameController,
-                            decoration: _inputDecoration('Pick a username'),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            decoration: const InputDecoration(hintText: 'Pick a username'),
+                            style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
                             validator: (val) => val == null || val.trim().isEmpty ? 'Username required' : null,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                         ],
 
                         // Email
-                        const Text(
-                          'EMAIL ADDRESS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: borderColor,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
+                        _buildLabel('EMAIL ADDRESS'),
+                        const SizedBox(height: 8),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: _inputDecoration('name@domain.com'),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          decoration: const InputDecoration(hintText: 'name@domain.com'),
+                          style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
                           validator: (val) {
                             if (val == null || val.isEmpty) return 'Email required';
                             if (!val.contains('@')) return 'Invalid email';
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
                         // Password
-                        const Text(
-                          'PASSWORD',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: borderColor,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
+                        _buildLabel('PASSWORD'),
+                        const SizedBox(height: 8),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: _inputDecoration('••••••••'),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          decoration: const InputDecoration(hintText: '••••••••'),
+                          style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
                           validator: (val) => val == null || val.length < 6 ? 'Min 6 characters' : null,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
 
                         // Submit Button
                         ElevatedButton(
                           onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: accentColor,
-                            foregroundColor: borderColor,
-                            shadowColor: borderColor,
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            side: const BorderSide(color: borderColor, width: 2),
-                          ).copyWith(
-                            // Flat design hover/active shadow simulation
-                            overlayColor: WidgetStateProperty.resolveWith(
-                              (states) => states.contains(WidgetState.pressed) 
-                                  ? borderColor.withOpacity(0.08) 
-                                  : null,
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: _isLoading
@@ -278,22 +243,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: borderColor,
+                                    color: Colors.white,
                                   ),
                                 )
                               : Text(
-                                  _isSignUp ? 'SIGN UP' : 'LOG IN',
+                                  _isSignUp ? 'Sign Up' : 'Log In',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w600,
                                     fontSize: 16,
-                                    letterSpacing: 0.5,
                                   ),
                                 ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   // Toggle Login/Register
                   TextButton(
@@ -304,16 +269,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       });
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: borderColor,
+                      foregroundColor: primaryColor,
                     ),
                     child: Text(
                       _isSignUp
                           ? 'Already have an account? Log In'
                           : "Don't have an account? Sign Up",
                       style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        decoration: TextDecoration.underline,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -326,31 +291,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String hintText) {
-    const borderColor = Color(0xFF1E1E1E);
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(color: borderColor.withOpacity(0.3), fontWeight: FontWeight.bold),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      filled: true,
-      fillColor: const Color(0xFFFAFAFA),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: borderColor, width: 1.5),
+  Widget _buildLabel(String labelText) {
+    return Text(
+      labelText,
+      style: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF414754),
+        letterSpacing: 0.5,
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: borderColor, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2),
-      ),
-      errorStyle: const TextStyle(fontWeight: FontWeight.bold),
     );
   }
 }
