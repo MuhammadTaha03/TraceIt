@@ -30,69 +30,88 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const borderColor = Color(0xFF1E1E1E);
+    const primaryColor = Color(0xFF1A73E8);
+    const outlineColor = Color(0xFF727785);
+    const outlineVariant = Color(0xFFC1C6D6);
+    const backgroundColor = Color(0xFFF8F9FA);
+    const onSurface = Color(0xFF191C1D);
+    const errorColor = Color(0xFFBA1A1A);
 
     return MaterialApp(
       title: 'TraceIt',
       debugShowCheckedModeBanner: false,
       
-      // Beautiful modern flat minimalist theme
+      // Beautiful premium M3 theme
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7F9FC),
+        scaffoldBackgroundColor: backgroundColor,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFFD93D),
-          primary: const Color(0xFFFFD93D),
-          secondary: const Color(0xFF4ECDC4),
-          error: const Color(0xFFFF6B6B),
+          seedColor: primaryColor,
+          primary: primaryColor,
+          secondary: const Color(0xFF005AC1),
+          error: errorColor,
+          surface: backgroundColor,
+          onSurface: onSurface,
         ),
         
-        // Form field formatting
+        // Form field formatting matching M3 rounded design
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: borderColor, width: 1.5),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: outlineVariant, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: borderColor, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryColor, width: 2),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: errorColor, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: errorColor, width: 2),
           ),
           hintStyle: TextStyle(
-            color: borderColor.withOpacity(0.3),
-            fontWeight: FontWeight.bold,
+            color: outlineColor.withOpacity(0.5),
+            fontWeight: FontWeight.w400,
+          ),
+          labelStyle: const TextStyle(
+            color: outlineColor,
+            fontWeight: FontWeight.w500,
+          ),
+          floatingLabelStyle: const TextStyle(
+            color: primaryColor,
+            fontWeight: FontWeight.w600,
           ),
         ),
 
-        // Text typography defaults (Clean and Bold)
-        fontFamily: 'Outfit', // Uses system font or Outfit if bundled
+        // Text typography defaults (Inter per DESIGN.md)
+        fontFamily: 'Inter', 
         textTheme: const TextTheme(
-          headlineLarge: TextStyle(fontWeight: FontWeight.w900, color: borderColor),
-          headlineMedium: TextStyle(fontWeight: FontWeight.w900, color: borderColor),
-          titleLarge: TextStyle(fontWeight: FontWeight.w900, color: borderColor),
-          titleMedium: TextStyle(fontWeight: FontWeight.bold, color: borderColor),
-          bodyLarge: TextStyle(fontWeight: FontWeight.w500, color: borderColor),
-          bodyMedium: TextStyle(fontWeight: FontWeight.normal, color: borderColor),
+          headlineLarge: TextStyle(fontWeight: FontWeight.w700, color: onSurface, letterSpacing: -0.02),
+          headlineMedium: TextStyle(fontWeight: FontWeight.w600, color: onSurface),
+          titleLarge: TextStyle(fontWeight: FontWeight.w600, color: onSurface),
+          titleMedium: TextStyle(fontWeight: FontWeight.w500, color: onSurface),
+          bodyLarge: TextStyle(fontWeight: FontWeight.w400, color: onSurface),
+          bodyMedium: TextStyle(fontWeight: FontWeight.w400, color: onSurface),
+          labelLarge: TextStyle(fontWeight: FontWeight.w600, color: onSurface),
         ),
 
-        // Custom AppBar
+        // Custom AppBar M3 default styling
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+          backgroundColor: backgroundColor,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
-          iconTheme: IconThemeData(color: borderColor),
+          iconTheme: IconThemeData(color: onSurface),
+          centerTitle: true,
           titleTextStyle: TextStyle(
-            color: borderColor,
-            fontWeight: FontWeight.w900,
+            fontFamily: 'Inter',
+            color: onSurface,
+            fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
         ),
@@ -132,7 +151,7 @@ class AuthGateway extends ConsumerWidget {
       loading: () => const Scaffold(
         body: Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF1E1E1E),
+            color: Color(0xFF1A73E8),
             strokeWidth: 3,
           ),
         ),
@@ -144,7 +163,7 @@ class AuthGateway extends ConsumerWidget {
             child: Text(
               'Authentication Error: $err\nPlease check connection or reload.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF6B6B)),
+              style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFBA1A1A)),
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
@@ -32,11 +33,9 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
     try {
       await ref.read(supabaseServiceProvider).addComment(postId, text);
       _commentController.clear();
-      // Invalidate comments for this post
-      // ref.invalidate(commentsProvider(postId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post comment: $e'), backgroundColor: const Color(0xFFFF6B6B)),
+        SnackBar(content: Text('Failed to post comment: $e'), backgroundColor: const Color(0xFFBA1A1A)),
       );
     } finally {
       setState(() {
@@ -48,7 +47,6 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
   Future<void> _deleteComment(String postId, String commentId) async {
     try {
       await ref.read(supabaseServiceProvider).deleteComment(commentId);
-      // ref.invalidate(commentsProvider(postId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete comment: $e')),
@@ -64,10 +62,8 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
     try {
       final service = ref.read(supabaseServiceProvider);
       
-      // 1. Update the claim status (accepted / rejected)
       await service.updateClaimStatus(claimId, status);
       
-      // 2. If accepted, automatically mark the post as resolved
       if (status == 'accepted') {
         await service.updatePostStatus(postId, 'resolved');
       }
@@ -75,12 +71,12 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Claim successfully $status!'),
-          backgroundColor: status == 'accepted' ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
+          backgroundColor: status == 'accepted' ? const Color(0xFF1A73E8) : const Color(0xFFBA1A1A),
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Action failed: $e'), backgroundColor: const Color(0xFFFF6B6B)),
+        SnackBar(content: Text('Action failed: $e'), backgroundColor: const Color(0xFFBA1A1A)),
       );
     } finally {
       setState(() {
@@ -99,12 +95,12 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Recovery claim submitted successfully!'),
-          backgroundColor: Color(0xFF4ECDC4),
+          backgroundColor: Color(0xFF1A73E8),
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to claim: $e'), backgroundColor: const Color(0xFFFF6B6B)),
+        SnackBar(content: Text('Failed to claim: $e'), backgroundColor: const Color(0xFFBA1A1A)),
       );
     } finally {
       setState(() {
@@ -120,13 +116,11 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
 
     try {
       await ref.read(supabaseServiceProvider).updatePostStatus(postId, 'resolved');
-      // ref.invalidate(postsProvider);
-      // ref.invalidate(postDetailsProvider(postId));
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Item marked as resolved!'),
-          backgroundColor: Color(0xFF4ECDC4),
+          backgroundColor: Color(0xFF1A73E8),
         ),
       );
     } catch (e) {
@@ -142,10 +136,11 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const borderColor = Color(0xFF1E1E1E);
-    const yellowAccent = Color(0xFFFFD93D);
-    const orangeAccent = Color(0xFFFF6B6B);
-    const tealAccent = Color(0xFF4ECDC4);
+    const primaryColor = Color(0xFF1A73E8);
+    const onSurface = Color(0xFF191C1D);
+    const outlineColor = Color(0xFF727785);
+    const outlineVariant = Color(0xFFE1E3E4);
+    const surfaceContainer = Color(0xFFF3F4F5);
 
     final postId = ModalRoute.of(context)!.settings.arguments as String;
     final postAsyncValue = ref.watch(postDetailsProvider(postId));
@@ -153,30 +148,33 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
     final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF8F9FA),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        shape: const Border(
-          bottom: BorderSide(color: borderColor, width: 2),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.white.withOpacity(0.5)),
+          ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: borderColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Item Details',
-          style: TextStyle(
-            color: borderColor,
-            fontWeight: FontWeight.w900,
-            fontSize: 20,
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: postAsyncValue.when(
         data: (post) {
           if (post == null) {
-            return const Center(child: Text('Post not found.'));
+            return const Center(child: Text('Post not found.', style: TextStyle(fontFamily: 'Inter')));
           }
 
           final isOwner = currentUser?.id == post.userId;
@@ -187,162 +185,171 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Header Card with image
-                      Container(
-                        color: Colors.white,
+                      if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+                        Container(
+                          height: 320,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: NetworkImage(post.imageUrl!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          height: 180,
+                          color: surfaceContainer,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            isLost ? Icons.search_rounded : Icons.check_circle_outline_rounded,
+                            size: 48,
+                            color: outlineColor.withOpacity(0.5),
+                          ),
+                        ),
+                      
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-                              Container(
-                                height: 260,
-                                decoration: BoxDecoration(
-                                  border: const Border(
-                                    bottom: BorderSide(color: borderColor, width: 2),
-                                  ),
-                                  image: DecorationImage(
-                                    image: NetworkImage(post.imageUrl!),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              )
-                            else
-                              Container(
-                                height: 140,
-                                color: const Color(0xFFF8F9FA),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  isLost ? Icons.search_rounded : Icons.check_circle_outline_rounded,
-                                  size: 48,
-                                  color: borderColor.withOpacity(0.3),
-                                ),
-                              ),
-                            
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Row: Category & Status tags
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: isLost ? orangeAccent : tealAccent,
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: borderColor, width: 2),
-                                            ),
-                                            child: Text(
-                                              post.type.toUpperCase(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 12,
-                                                color: borderColor,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF1F3F5),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: borderColor.withOpacity(0.15), width: 1.5),
-                                            ),
-                                            child: Text(
-                                              post.category,
-                                              style: const TextStyle(
-                                                color: Color(0xFF495057),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                            // Row: Category & Status tags
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isLost ? const Color(0xFFFFDAD6) : const Color(0xFF89FA9B),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
-                                      
-                                      // Status
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: isResolved ? const Color(0xFFD3F9D8) : const Color(0xFFFFEC99),
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: borderColor, width: 1.5),
-                                        ),
-                                        child: Text(
-                                          post.status.toUpperCase(),
-                                          style: TextStyle(
-                                            color: isResolved ? const Color(0xFF2B8A3E) : const Color(0xFFE67E22),
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 11,
-                                          ),
+                                      child: Text(
+                                        post.type.toUpperCase(),
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                          letterSpacing: 0.5,
+                                          color: isLost ? const Color(0xFF93000A) : const Color(0xFF002108),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  
-                                  // Title
-                                  Text(
-                                    post.title,
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
-                                      color: borderColor,
                                     ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: surfaceContainer,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Text(
+                                        post.category,
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Color(0xFF414754),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                
+                                // Status
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isResolved ? const Color(0xFFD3F9D8) : const Color(0xFFFFEC99),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                  const SizedBox(height: 10),
-                                  
-                                  // Description
-                                  Text(
-                                    post.description,
+                                  child: Text(
+                                    post.status.toUpperCase(),
                                     style: TextStyle(
-                                      fontSize: 15,
-                                      color: borderColor.withOpacity(0.8),
-                                      height: 1.4,
+                                      fontFamily: 'Inter',
+                                      color: isResolved ? const Color(0xFF002108) : const Color(0xFF4D3A00),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
-                                  const Divider(height: 32, thickness: 1),
-
-                                  // Location & Date Rows
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on_rounded, size: 18, color: Color(0xFFE64980)),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'LOCATION:  ',
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF868E96)),
-                                      ),
-                                      Text(
-                                        post.location,
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: borderColor),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today_rounded, size: 18, color: Color(0xFF4C6EF5)),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'REPORTED:  ',
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF868E96)),
-                                      ),
-                                      Text(
-                                        '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year} at ${post.createdAt.hour}:${post.createdAt.minute.toString().padLeft(2, '0')}',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: borderColor),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            
+                            // Title
+                            Text(
+                              post.title,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: onSurface,
+                                letterSpacing: -0.5,
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // Description
+                            Text(
+                              post.description,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                color: onSurface.withOpacity(0.8),
+                                height: 1.5,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Divider(height: 1, thickness: 1, color: outlineVariant),
+                            ),
+
+                            // Location & Date Rows
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(8)),
+                                  child: const Icon(Icons.location_on_rounded, size: 16, color: Color(0xFF93000A)),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('LOCATION', style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w600, color: outlineColor)),
+                                      Text(post.location, style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(color: const Color(0xFFD8E2FF), borderRadius: BorderRadius.circular(8)),
+                                  child: const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF001A41)),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('REPORTED ON', style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w600, color: outlineColor)),
+                                      Text('${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year} at ${post.createdAt.hour}:${post.createdAt.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -351,17 +358,18 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                       // Interactive Actions Section
                       if (!isResolved) ...[
                         Padding(
-                          padding: const EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
                           child: Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: borderColor, width: 2),
-                              boxShadow: const [
+                              borderRadius: BorderRadius.circular(28), // M3 Card Radius
+                              border: Border.all(color: outlineVariant, width: 1),
+                              boxShadow: [
                                 BoxShadow(
-                                  color: borderColor,
-                                  offset: Offset(3, 3),
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
@@ -373,75 +381,75 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                                       ? 'Owner Controls' 
                                       : (isLost ? 'Help Find This Item' : 'Claim Recovered Item'),
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    color: borderColor,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
+                                    color: onSurface,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Text(
                                   isOwner
                                       ? 'Mark this item as resolved if you recovered it or returned it to its owner.'
                                       : (isLost 
                                           ? 'Write comment below if you have any leads on where this item is.'
                                           : 'If this is your item, submit a claim request. The finder will review it.'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: borderColor.withOpacity(0.6),
-                                    fontWeight: FontWeight.bold,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 13,
+                                    color: outlineColor,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 20),
                                 
                                 if (isOwner)
                                   ElevatedButton(
                                     onPressed: _isPerformingAction ? null : () => _markResolved(post.id),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: tealAccent,
-                                      foregroundColor: borderColor,
+                                      backgroundColor: const Color(0xFFD3F9D8),
+                                      foregroundColor: const Color(0xFF002108),
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      side: const BorderSide(color: borderColor, width: 2),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     ),
                                     child: _isPerformingAction
                                         ? const SizedBox(
-                                            height: 18,
-                                            width: 18,
-                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: borderColor),
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF002108)),
                                           )
-                                        : const Text('MARK AS RESOLVED', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                        : const Text('Mark as Resolved', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 15)),
                                   )
                                 else if (!isLost)
                                   ElevatedButton(
                                     onPressed: _isPerformingAction ? null : () => _claimItem(post.id),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: yellowAccent,
-                                      foregroundColor: borderColor,
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      side: const BorderSide(color: borderColor, width: 2),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     ),
                                     child: _isPerformingAction
                                         ? const SizedBox(
-                                            height: 18,
-                                            width: 18,
-                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: borderColor),
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                                           )
-                                        : const Text('SUBMIT RECOVERY CLAIM', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                        : const Text('Submit Recovery Claim', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 15)),
                                   )
                                 else
                                   Container(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F3F5),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: surfaceContainer,
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                     alignment: Alignment.center,
                                     child: const Text(
                                       'Leave a comment below if you have any details!',
-                                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF495057)),
+                                      style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF414754)),
                                     ),
                                   ),
                               ],
@@ -450,133 +458,131 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                         ),
                       ],
 
-                      // ==========================================
-                      // 🌟 CLAIMS MANAGEMENT DASHBOARD (OWNER ONLY) 🌟
-                      // ==========================================
+                      // CLAIMS MANAGEMENT DASHBOARD (OWNER ONLY)
                       if (isOwner) ...[
                         ref.watch(postClaimsProvider(post.id)).when(
-                              data: (claims) {
-                                if (claims.isEmpty) return const SizedBox.shrink();
-                                
-                                return Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: borderColor, width: 2),
+                          data: (claims) {
+                            if (claims.isEmpty) return const SizedBox.shrink();
+                            
+                            return Container(
+                              margin: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(color: outlineVariant, width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
                                     children: [
-                                      const Row(
-                                        children: [
-                                          Icon(Icons.assignment_turned_in_rounded, color: borderColor),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'INCOMING RECOVERY CLAIMS',
-                                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      ListView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: claims.length,
-                                        itemBuilder: (context, index) {
-                                          final claim = claims[index];
-                                          final claimId = claim['id'] as String;
-                                          final currentStatus = claim['status'] as String;
-                                          final profile = claim['profiles'] as Map<String, dynamic>?;
-                                          final claimantName = profile?['username'] ?? 'Anonymous User';
-
-                                          return Container(
-                                            margin: const EdgeInsets.symmetric(vertical: 6),
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFFAFAFA),
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: borderColor, width: 1.5),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        claimantName,
-                                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-                                                      ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        'Status: ${currentStatus.toUpperCase()}',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: currentStatus == 'accepted'
-                                                              ? const Color(0xFF0F5A54)
-                                                              : currentStatus == 'rejected'
-                                                                  ? const Color(0xFF7A0E0E)
-                                                                  : borderColor.withOpacity(0.6),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                if (currentStatus == 'pending' && !_isPerformingAction) ...[
-                                                  // Reject Button
-                                                  IconButton(
-                                                    icon: const Icon(Icons.cancel_outlined, color: Color(0xFFFF6B6B)),
-                                                    onPressed: () => _handleClaimStatus(claimId, 'rejected', post.id),
-                                                  ),
-                                                  // Accept Button
-                                                  InkWell(
-                                                    onTap: () => _handleClaimStatus(claimId, 'accepted', post.id),
-                                                    child: Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(0xFF4ECDC4),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        border: Border.all(color: borderColor, width: 1.5),
-                                                      ),
-                                                      child: const Text(
-                                                        'ACCEPT',
-                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F5A54)),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ] else if (currentStatus != 'pending') ...[
-                                                  Icon(
-                                                    currentStatus == 'accepted' ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                                                    color: currentStatus == 'accepted' ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
-                                                  )
-                                                ],
-                                              ],
-                                            ),
-                                          );
-                                        },
+                                      Icon(Icons.assignment_turned_in_rounded, color: primaryColor),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Incoming Claims',
+                                        style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 18, color: onSurface),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
-                              loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(color: borderColor))),
-                              error: (err, _) => const SizedBox.shrink(),
-                            ),
+                                  const SizedBox(height: 16),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: claims.length,
+                                    itemBuilder: (context, index) {
+                                      final claim = claims[index];
+                                      final claimId = claim['id'] as String;
+                                      final currentStatus = claim['status'] as String;
+                                      final profile = claim['profiles'] as Map<String, dynamic>?;
+                                      final claimantName = profile?['username'] ?? 'Anonymous User';
+
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(vertical: 6),
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: surfaceContainer,
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    claimantName,
+                                                    style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 15),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Status: ${currentStatus.toUpperCase()}',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Inter',
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: currentStatus == 'accepted'
+                                                          ? const Color(0xFF002108)
+                                                          : currentStatus == 'rejected'
+                                                              ? const Color(0xFF93000A)
+                                                              : outlineColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (currentStatus == 'pending' && !_isPerformingAction) ...[
+                                              IconButton(
+                                                icon: const Icon(Icons.cancel_outlined, color: Color(0xFFBA1A1A)),
+                                                onPressed: () => _handleClaimStatus(claimId, 'rejected', post.id),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () => _handleClaimStatus(claimId, 'accepted', post.id),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF1A73E8),
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  elevation: 0,
+                                                ),
+                                                child: const Text('Accept', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                                              ),
+                                            ] else if (currentStatus != 'pending') ...[
+                                              Icon(
+                                                currentStatus == 'accepted' ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                                                color: currentStatus == 'accepted' ? const Color(0xFF1A73E8) : const Color(0xFFBA1A1A),
+                                              )
+                                            ],
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(color: primaryColor))),
+                          error: (err, _) => const SizedBox.shrink(),
+                        ),
                       ],
-                      // ==========================================
 
                       // Comments Header
                       const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         child: Text(
                           'Comments Thread',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: borderColor,
+                            fontFamily: 'Inter',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: onSurface,
                           ),
                         ),
                       ),
@@ -586,14 +592,15 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                         data: (comments) {
                           if (comments.isEmpty) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              padding: const EdgeInsets.symmetric(vertical: 32),
                               child: Center(
                                 child: Text(
                                   'No comments yet. Start the conversation!',
                                   style: TextStyle(
-                                    color: borderColor.withOpacity(0.4),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                    fontFamily: 'Inter',
+                                    color: outlineColor,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
@@ -603,6 +610,7 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                           return ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: comments.length,
                             itemBuilder: (context, index) {
                               final comment = comments[index];
@@ -615,15 +623,15 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                           );
                         },
                         loading: () => const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: CircularProgressIndicator(color: borderColor)),
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(child: CircularProgressIndicator(color: primaryColor)),
                         ),
                         error: (err, stack) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: Text('Error: $err', style: const TextStyle(fontWeight: FontWeight.bold))),
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(child: Text('Error: $err', style: const TextStyle(fontWeight: FontWeight.w600))),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 120), // Padding for the bottom comment box
                     ],
                   ),
                 ),
@@ -631,13 +639,20 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
               
               // Bottom Comment Input Box
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border(
-                    top: BorderSide(color: borderColor, width: 2),
+                  border: const Border(
+                    top: BorderSide(color: outlineVariant, width: 1),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    )
+                  ]
                 ),
-                padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + MediaQuery.of(context).viewInsets.bottom),
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.of(context).viewInsets.bottom),
                 child: Row(
                   children: [
                     Expanded(
@@ -645,39 +660,42 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
                         controller: _commentController,
                         decoration: InputDecoration(
                           hintText: 'Type your message...',
-                          hintStyle: TextStyle(color: borderColor.withOpacity(0.3), fontWeight: FontWeight.bold, fontSize: 13),
+                          hintStyle: const TextStyle(fontFamily: 'Inter', color: outlineColor, fontWeight: FontWeight.w400, fontSize: 14),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           filled: true,
-                          fillColor: const Color(0xFFF1F3F5),
+                          fillColor: surfaceContainer,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: borderColor, width: 1.5),
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: borderColor, width: 2),
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(color: primaryColor, width: 1),
                           ),
                         ),
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: borderColor, fontSize: 14),
+                        style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, color: onSurface, fontSize: 14),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     GestureDetector(
                       onTap: _isSubmittingComment ? null : () => _addComment(post.id),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: yellowAccent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: borderColor, width: 1.5),
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: _isSubmittingComment
                             ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: borderColor),
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
-                            : const Icon(Icons.send_rounded, color: borderColor, size: 18),
+                            : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                       ),
                     ),
                   ],
@@ -688,14 +706,14 @@ class _PostDetailsScreenState extends ConsumerState<PostDetailsScreen> {
         },
         loading: () => const Center(
           child: CircularProgressIndicator(
-            color: borderColor,
+            color: primaryColor,
             strokeWidth: 3,
           ),
         ),
         error: (err, stack) => Center(
           child: Text(
             'Error: $err',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFF6B6B)),
+            style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFBA1A1A)),
           ),
         ),
       ),
